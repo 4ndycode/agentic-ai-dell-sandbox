@@ -1,0 +1,6 @@
+api|fortiai-demo/api:dfe5198|2 parts|161M
+mcp-store|fortiai-demo/mcp-store:dfe5198|2 parts|113M
+mcp-shipping|fortiai-demo/mcp-shipping:dfe5198|2 parts|128M
+mcp-rogue|fortiai-demo/mcp-rogue:dfe5198|2 parts|113M
+mcp-poison|fortiai-demo/mcp-poison:dfe5198|2 parts|113M
+frontend|fortiai-demo/frontend:dfe5198|2 parts|113M
