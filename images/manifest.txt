@@ -1,6 +1,0 @@
-api|amd64|fortiai-demo/api:dfe5198|1 parts| 80M
-mcp-store|amd64|fortiai-demo/mcp-store:dfe5198|1 parts| 54M
-mcp-shipping|amd64|fortiai-demo/mcp-shipping:dfe5198|1 parts| 62M
-mcp-rogue|amd64|fortiai-demo/mcp-rogue:dfe5198|1 parts| 54M
-mcp-poison|amd64|fortiai-demo/mcp-poison:dfe5198|1 parts| 54M
-frontend|amd64|fortiai-demo/frontend:dfe5198|1 parts| 51M
