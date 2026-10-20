@@ -109,29 +109,42 @@ load_images() {
     exit 1
   fi
 
-  # Discover services from chunk files (e.g. api.tar.gz.part-aa → api)
-  SVCS=$(ls "$IMAGE_DIR"/*.tar.gz.part-* 2>/dev/null \
-    | sed 's|.*/||; s|\.tar\.gz\.part-.*||' | sort -u)
+  # Detect host architecture: x86_64 → amd64, aarch64 → arm64
+  HOST_ARCH=$(uname -m)
+  case "$HOST_ARCH" in
+    x86_64)  ARCH="amd64" ;;
+    aarch64) ARCH="arm64" ;;
+    arm64)   ARCH="arm64" ;;
+    *)       echo "WARNING: Unknown arch $HOST_ARCH, trying amd64"; ARCH="amd64" ;;
+  esac
+  echo "  Host architecture: $HOST_ARCH → loading $ARCH images"
+  echo ""
+
+  # Discover services from chunk files (e.g. api-amd64.tar.gz.part-aa → api)
+  SVCS=$(ls "$IMAGE_DIR"/*-${ARCH}.tar.gz.part-* 2>/dev/null \
+    | sed "s|.*/||; s|-${ARCH}\.tar\.gz\.part-.*||" | sort -u)
 
   if [ -z "$SVCS" ]; then
-    # Fallback: maybe there are already-assembled .tar.gz files
-    SVCS=$(ls "$IMAGE_DIR"/*.tar.gz 2>/dev/null \
-      | sed 's|.*/||; s|\.tar\.gz||' | sort -u)
+    # Fallback: try already-assembled .tar.gz files
+    SVCS=$(ls "$IMAGE_DIR"/*-${ARCH}.tar.gz 2>/dev/null \
+      | sed "s|.*/||; s|-${ARCH}\.tar\.gz||" | sort -u)
   fi
 
   if [ -z "$SVCS" ]; then
-    echo "ERROR: No image chunks (.tar.gz.part-*) or tarballs (.tar.gz) found in $IMAGE_DIR"
+    echo "ERROR: No $ARCH image chunks or tarballs found in $IMAGE_DIR"
+    echo "       Available files:"
+    ls "$IMAGE_DIR"/ 2>/dev/null || echo "       (empty)"
     exit 1
   fi
 
   for SVC in $SVCS; do
-    TARBALL="${IMAGE_DIR}/${SVC}.tar.gz"
+    TARBALL="${IMAGE_DIR}/${SVC}-${ARCH}.tar.gz"
 
     # Reassemble chunks if they exist
-    if ls "${IMAGE_DIR}/${SVC}.tar.gz.part-"* &>/dev/null; then
-      PARTS=$(ls "${IMAGE_DIR}/${SVC}.tar.gz.part-"* | wc -l | tr -d ' ')
+    if ls "${IMAGE_DIR}/${SVC}-${ARCH}.tar.gz.part-"* &>/dev/null; then
+      PARTS=$(ls "${IMAGE_DIR}/${SVC}-${ARCH}.tar.gz.part-"* | wc -l | tr -d ' ')
       echo "  Reassembling ${SVC} (${PARTS} chunks) ..."
-      cat "${IMAGE_DIR}/${SVC}.tar.gz.part-"* > "$TARBALL"
+      cat "${IMAGE_DIR}/${SVC}-${ARCH}.tar.gz.part-"* > "$TARBALL"
     fi
 
     if [ ! -f "$TARBALL" ]; then
@@ -140,11 +153,11 @@ load_images() {
     fi
 
     SIZE=$(du -h "$TARBALL" | cut -f1)
-    echo "  Loading ${SVC}.tar.gz ($SIZE) ..."
+    echo "  Loading ${SVC} ($SIZE) ..."
     gunzip -c "$TARBALL" | docker load
 
     # Clean up reassembled tarball to free disk space
-    if ls "${IMAGE_DIR}/${SVC}.tar.gz.part-"* &>/dev/null; then
+    if ls "${IMAGE_DIR}/${SVC}-${ARCH}.tar.gz.part-"* &>/dev/null; then
       rm -f "$TARBALL"
     fi
     echo ""
